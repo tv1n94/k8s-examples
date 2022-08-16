@@ -1,0 +1,79 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-nginx
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-nginx
+  #Стратегия обновления
+  strategy:
+    #Обновлять по одной реплике
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: my-nginx
+    spec:
+      containers:
+      - image: nginx:1.16
+        name: nginx
+        ports:
+        - containerPort: 80
+        #проверка способности приложения принимать трафик
+        readinessProbe:
+          #Всего 5 попыток
+          failureThreshold: 5
+          #Проверка заключается в отправке запросов на 80 порт
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 10
+          #Если хотя бы 2 попытки удачные, то проверка пройдена и проверка заканчивается
+          successThreshold: 2
+          timeoutSeconds: 3
+        #Постоянная проверка
+        livenessProbe:
+          #Если 3 запроса подряд сбоят, то проверка считается непройденой
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 10
+          #После каждого 1 удачного запроса счётчик ошибок сбрасывается
+          successThreshold: 1
+          timeoutSeconds: 3
+          #Задержка после старта пода (через 10 секунд начинаются проверки)
+          initialDelaySeconds: 10
+        #Указание ресурсов для одного пода  
+        #Указать можно ОЗУ и CPU
+        #CPU -указывается в микропроцессорах (1000 микропроцессоров = 1 ядро)
+        #ОЗУ указывается в мегабайтах
+        resources:
+          #Желаемые запросы по ресурсам. Не контролируются k8s
+          #Должны быть меньше или равны Limits. 
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          #Верхняя планка по ресурсам, если поду нужно больше места, то под перезапускается
+          limits:
+            cpu: 300m
+            memory: 512Mi
+        #Монтируем в контейнер файл /etc/nginx/conf.d/default.conf
+        #Имя default.conf берётся из configmap
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/conf.d/
+      #В файл /etc/nginx/conf.d/config добавляем строки, указанные в configmap-nginx.yml
+      volumes:
+      - name: config
+        configMap:
+          name: configmap-nginx
+
+

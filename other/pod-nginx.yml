@@ -1,0 +1,13 @@
+#Пример запуска одного пода в k8s
+#Без использования развёртывания
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-nginx
+spec:
+  containers:
+  - image: nginx:1.16
+    name: nginx
+    ports:
+    - containerPort: 80

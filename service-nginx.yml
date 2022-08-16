@@ -1,0 +1,16 @@
+#Балансировка нагрузки
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-nginx
+  namespace: default
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: my-nginx
+  #Будет использоваться только внутренняя сеть кластера
+  #Доступ из вне будет закрыт
+  type: ClusterIP

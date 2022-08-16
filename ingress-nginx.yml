@@ -1,0 +1,22 @@
+#Проброс трафика из вне до контейнеров
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress   
+metadata:
+  name: ingress-nginx   
+  namespace: default
+spec:
+  rules:
+    #DNS-имя по которому можно будет подключиться к контейнерам
+    - host: nginx.cluster.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix 
+            backend:
+              service:
+              #Ссылка на service service-nginx
+                name: service-nginx
+                port:
+                  number: 80
+  
